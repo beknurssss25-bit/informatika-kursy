@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Окно редактора кода">
+<defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
+<rect width="640" height="400" rx="28" fill="url(#a)"/>
+<g opacity=".18" fill="#fff"><circle cx="560" cy="60" r="90"/><circle cx="70" cy="350" r="70"/></g>
+<rect x="60" y="56" width="520" height="288" rx="16" fill="#0E1430"/>
+<rect x="60" y="56" width="520" height="38" rx="16" fill="#1B2347"/><rect x="60" y="78" width="520" height="16" fill="#1B2347"/>
+<circle cx="86" cy="75" r="6" fill="#FF6B8A"/><circle cx="106" cy="75" r="6" fill="#FFB547"/><circle cx="126" cy="75" r="6" fill="#3DDC97"/>
+<g font-family="JetBrains Mono,monospace" font-size="17" font-weight="500">
+<text x="84" y="132" fill="#C792EA">n</text><text x="102" y="132" fill="#E6E9FF">=</text><text x="124" y="132" fill="#82AAFF">int</text><text x="160" y="132" fill="#E6E9FF">(input())</text>
+<text x="84" y="164" fill="#C792EA">s</text><text x="102" y="164" fill="#E6E9FF">=</text><text x="124" y="164" fill="#F78C6C">0</text>
+<text x="84" y="196" fill="#C792EA">for</text><text x="128" y="196" fill="#E6E9FF">i</text><text x="146" y="196" fill="#C792EA">in</text><text x="174" y="196" fill="#82AAFF">range</text><text x="232" y="196" fill="#E6E9FF">(1, n+1):</text>
+<text x="108" y="228" fill="#E6E9FF">s += i * i</text>
+<text x="84" y="260" fill="#82AAFF">print</text><text x="136" y="260" fill="#E6E9FF">(s)</text>
+<text x="84" y="304" fill="#546099"># сумма квадратов — готово!</text></g>
+<rect x="400" y="120" width="150" height="104" rx="12" fill="#3DDC97" opacity=".14"/><text x="475" y="162" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" fill="#3DDC97">вход: 5</text><text x="475" y="196" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="26" font-weight="700" fill="#3DDC97">55</text>
+</svg>

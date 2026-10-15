@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 520" role="img" aria-label="Ноутбук с кодом">
+<defs>
+<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
+<linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2347"/><stop offset="1" stop-color="#0E1430"/></linearGradient>
+<linearGradient id="g3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFB547"/><stop offset="1" stop-color="#FF6B8A"/></linearGradient>
+<radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7C5CFF" stop-opacity=".55"/><stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/></radialGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".35"/></filter>
+</defs>
+<ellipse cx="320" cy="270" rx="300" ry="230" fill="url(#glow)"/>
+<g filter="url(#sh)">
+<rect x="110" y="70" width="420" height="270" rx="18" fill="#2A3366"/>
+<rect x="122" y="82" width="396" height="246" rx="10" fill="url(#g2)"/>
+<circle cx="142" cy="100" r="5" fill="#FF6B8A"/><circle cx="159" cy="100" r="5" fill="#FFB547"/><circle cx="176" cy="100" r="5" fill="#3DDC97"/>
+<rect x="200" y="94" width="120" height="12" rx="6" fill="#ffffff" opacity=".08"/>
+<g font-family="JetBrains Mono,ui-monospace,monospace" font-size="15" font-weight="500">
+<text x="142" y="140" fill="#8892C8">1</text><text x="172" y="140" fill="#C792EA">def</text><text x="212" y="140" fill="#82AAFF">привет</text><text x="278" y="140" fill="#E6E9FF">(имя):</text>
+<text x="142" y="168" fill="#8892C8">2</text><text x="190" y="168" fill="#E6E9FF">print(</text><text x="256" y="168" fill="#C3E88D">"Привет, "</text><text x="352" y="168" fill="#E6E9FF">+ имя)</text>
+<text x="142" y="196" fill="#8892C8">3</text><text x="172" y="196" fill="#C792EA">for</text><text x="212" y="196" fill="#E6E9FF">i</text><text x="228" y="196" fill="#C792EA">in</text><text x="256" y="196" fill="#82AAFF">range</text><text x="312" y="196" fill="#E6E9FF">(</text><text x="324" y="196" fill="#F78C6C">5</text><text x="336" y="196" fill="#E6E9FF">):</text>
+<text x="142" y="224" fill="#8892C8">4</text><text x="190" y="224" fill="#E6E9FF">привет(</text><text x="262" y="224" fill="#C3E88D">"мир"</text><text x="316" y="224" fill="#E6E9FF">)</text>
+<text x="142" y="252" fill="#8892C8">5</text><text x="172" y="252" fill="#546099"># алгоритмы — это просто</text>
+<text x="142" y="280" fill="#8892C8">6</text><rect x="172" y="266" width="9" height="18" fill="#22D3EE"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></rect>
+</g>
+<path d="M60 350h520l-30 30a24 24 0 0 1-17 7H107a24 24 0 0 1-17-7z" fill="#39438A"/>
+<rect x="260" y="350" width="120" height="8" rx="4" fill="#202858"/>
+</g>
+<g>
+<g transform="translate(470 40)"><animateTransform attributeName="transform" type="translate" values="470 40;470 28;470 40" dur="4s" repeatCount="indefinite"/><rect width="92" height="56" rx="16" fill="url(#g1)"/><text x="46" y="37" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="26" fill="#fff">&lt;/&gt;</text></g>
+<g transform="translate(40 120)"><animateTransform attributeName="transform" type="translate" values="40 120;40 134;40 120" dur="5s" repeatCount="indefinite"/><rect width="84" height="84" rx="22" fill="#fff"/><text x="42" y="40" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="20" fill="#7C5CFF">0110</text><text x="42" y="62" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="20" fill="#22D3EE">1001</text></g>
+<g transform="translate(500 250)"><animateTransform attributeName="transform" type="translate" values="500 250;500 262;500 250" dur="4.5s" repeatCount="indefinite"/><circle cx="40" cy="40" r="40" fill="url(#g3)"/><text x="40" y="52" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="34" fill="#fff">{ }</text></g>
+<g transform="translate(70 395)"><animateTransform attributeName="transform" type="translate" values="70 395;70 383;70 395" dur="6s" repeatCount="indefinite"/><rect width="130" height="52" rx="26" fill="#3DDC97"/><text x="65" y="33" text-anchor="middle" font-family="Onest,sans-serif" font-weight="800" font-size="20" fill="#06281B">✓ Задача решена</text></g>
+</g>
+<g fill="#fff" opacity=".7"><circle cx="30" cy="60" r="3"/><circle cx="600" cy="170" r="4"/><circle cx="590" cy="440" r="3"/><circle cx="250" cy="30" r="2.5"/><circle cx="40" cy="300" r="2.5"/></g>
+</svg>
