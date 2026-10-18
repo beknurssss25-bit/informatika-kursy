@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Управление записью</title>
+<meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0A0F1F">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts/fonts.css"><link rel="stylesheet" href="css/admin.css?v=1">
+</head><body>
+
+<main class="gate" id="gate">
+ <div class="card">
+  <h1>🔒 Управление записью</h1>
+  <p class="muted small">Введите PIN владельца</p>
+  <form id="pinForm" autocomplete="off">
+   <input class="pin" id="pin" type="password" autocomplete="current-password" aria-label="PIN" required>
+   <button class="btn" id="pinGo" type="submit">Войти</button>
+  </form>
+  <div class="msg err" id="pinErr" role="alert" hidden></div>
+  <p class="muted small" style="margin:14px 0 0">Это лёгкая защита от случайных посетителей, а не банковская: сайт статический.</p>
+ </div>
+</main>
+
+<div class="wrap" id="app" hidden>
+ <div class="top">
+  <h1>Управление записью</h1>
+  <button class="btn btn-ghost btn-sm" id="refresh" type="button">↻ Обновить</button>
+  <button class="btn btn-ghost btn-sm" id="logout" type="button">Выйти</button>
+ </div>
+ <div class="msg warn" id="net" hidden></div>
+
+ <div class="layout">
+  <section class="card" aria-label="Календарь на 30 дней">
+   <div class="cal" id="cal"></div>
+   <div class="legend"><span><i class="lg-free"></i>свободно</span><span><i class="lg-book"></i>записан ученик</span><span><i class="lg-closed"></i>закрыто вами</span><span><i class="lg-past"></i>прошло / недоступно</span></div>
+   <p class="muted small" style="margin:10px 0 0">Точки у даты: <span style="color:var(--amber)">●</span> есть записи, <span style="color:var(--bad)">●</span> есть закрытые вами часы. Воскресенье — выходной (как на сайте).</p>
+  </section>
+
+  <section class="card" aria-live="polite">
+   <div id="noSel" class="muted">Выберите дату в календаре.</div>
+   <div id="dayBox" hidden>
+    <div class="dayhead"><h2 id="dayTitle"></h2></div>
+    <div class="slots" id="slots"></div>
+    <div class="actions">
+     <button class="btn btn-bad" id="closeDay" type="button">Закрыть весь день</button>
+     <button class="btn btn-ok" id="openDay" type="button">Открыть день</button>
+    </div>
+    <p class="muted small" style="margin:12px 0 0">Нажмите на свободный час — он закроется для записи. Нажмите на красный — откроется снова. Часы с записью учеников и прошедшие часы изменить нельзя.</p>
+   </div>
+  </section>
+ </div>
+
+ <section class="card sec">
+  <h2>Ближайшие записи</h2>
+  <ul class="list" id="bookings"><li class="muted">Загрузка…</li></ul>
+  <p class="muted small" style="margin:10px 0 0">Здесь видны только дата, время и тариф. Имя и телефон ученика в общем хранилище <b>не сохраняются</b> — они приходят вам в WhatsApp (кнопка «Отправить данные в WhatsApp» на экране записи) и хранятся только на устройстве ученика.</p>
+ </section>
+
+ <details id="pinBox">
+  <summary>Сменить PIN</summary>
+  <form class="pinform" id="chgForm" autocomplete="off">
+   <label>Текущий PIN<input type="password" id="pinOld" autocomplete="current-password" required></label>
+   <label>Новый PIN (не короче 4 символов, лучше 6+)<input type="password" id="pinNew" autocomplete="new-password" required></label>
+   <label>Повторите новый PIN<input type="password" id="pinNew2" autocomplete="new-password" required></label>
+   <button class="btn" type="submit" id="chgGo">Сменить PIN</button>
+  </form>
+  <div class="msg" id="chgMsg" hidden></div>
+  <p class="muted small">Новый PIN (в виде хэша, не открытым текстом) записывается в общее хранилище записи, поэтому действует на всех ваших устройствах. Честно о защите: хранилище открытое, а сайт статический — человек с техническими знаниями может обойти PIN или подменить его. PIN прячет страницу от случайных людей, но не защищает данные по-настоящему. Если вы забыли PIN — см. инструкцию ниже («Забыл PIN»).</p>
+ </details>
+
+ <details id="guide">
+  <summary>Инструкция</summary>
+  <h3>Как открыть админку</h3>
+  <p>Адрес: <code id="guideUrl">…/admin.html</code> (на сайте ссылки на неё нет — сохраните в закладки). Введите PIN. Начальный PIN: <code>2580</code> — сразу смените его (раздел «Сменить PIN»).</p>
+  <h3>Закрыть / открыть время</h3>
+  <ul>
+   <li>Выберите дату → нажмите зелёный час: он станет красным («закрыто»), на сайте он показывается как «занято».</li>
+   <li>Нажмите красный час — он снова свободен. Часы, на которые записались ученики (жёлтые), закрыть или открыть нельзя.</li>
+   <li>«Закрыть весь день» закрывает все свободные часы дня; «Открыть день» открывает только закрытые вами часы (записи учеников не трогает).</li>
+   <li>Записи на сайте принимаются на 30 дней вперёд, часы 10:00–19:00, воскресенье — выходной. За час до начала запись на сайте закрывается.</li>
+  </ul>
+  <h3>Как сменить цены и телефон</h3>
+  <p>Откройте файл <code>index.html</code> и <code>js/app.js</code> в репозитории GitHub (иконка карандаша ✎ → правка → «Commit changes»). Сайт обновится примерно через минуту.</p>
+  <ul>
+   <li><b>Цены:</b> в <code>index.html</code> найдите «25 000», «50 000», «100 000» и «за занятие» (3 125 / 2 500 — цена за урок); также в <code>description</code> в начале файла. И обязательно в <code>js/app.js</code> строка <code>var PLANS=…</code> — оттуда цена попадает в запись и сообщение в WhatsApp.</li>
+   <li><b>Телефон:</b> в <code>index.html</code> замените <code>77056468307</code> (ссылки tel: и wa.me) и «8 705 646 83 07» (видимый текст); в <code>js/app.js</code> — <code>phone:'77056468307'</code> и текст «Позвонить 8 705 646 83 07».</li>
+   <li>Совет: используйте в GitHub поиск по репозиторию (клавиша <code>/</code> или «Go to file» → поиск по тексту), чтобы найти все места.</li>
+  </ul>
+  <h3>Забыл PIN</h3>
+  <p>Откройте <code>admin.html</code> на компьютере, нажмите F12 → «Console» и выполните <code>adminHash('новый PIN')</code> — скопируйте полученную строку. Затем в GitHub откройте <code>js/admin.js</code> и вставьте её в строку <code>var PIN_HASH='…'</code> (Commit changes). Старый PIN, сохранённый в хранилище, после этого перестанет действовать, а работать будет новый.</p>
+  <h3>Передача сайта другому человеку</h3>
+  <ol>
+   <li>GitHub → репозиторий <code>informatika-kursy</code> → Settings → Collaborators → Add people (новый человек получит письмо), либо Settings → General → Danger Zone → «Transfer ownership» (передать репозиторий целиком).</li>
+   <li>При передаче аккаунта сайт остаётся по тому же адресу, пока репозиторий называется <code>informatika-kursy</code> и включены Pages (Settings → Pages: ветка <code>main</code>, папка <code>/</code>). При смене владельца адрес изменится на <code>новый-логин.github.io/informatika-kursy</code>.</li>
+   <li>Сообщите новому владельцу: адрес админки, PIN (и попросите сменить), что записи хранятся во внешнем сервисе keyvalue.immanuel.co (ключ приложения в <code>js/app.js</code>, <code>CFG.appKey</code>).</li>
+  </ol>
+ </details>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="js/admin.js?v=1"></script>
+</body></html>
