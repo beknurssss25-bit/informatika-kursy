@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A0F1F">
 <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="fonts/fonts.css"><link rel="stylesheet" href="css/admin.css?v=1">
+<link rel="stylesheet" href="fonts/fonts.css"><link rel="stylesheet" href="css/admin.css?v=2">
 </head><body>
 
 <main class="gate" id="gate">
@@ -32,8 +32,8 @@
  <div class="layout">
   <section class="card" aria-label="Календарь на 30 дней">
    <div class="cal" id="cal"></div>
-   <div class="legend"><span><i class="lg-free"></i>свободно</span><span><i class="lg-book"></i>записан ученик</span><span><i class="lg-closed"></i>закрыто вами</span><span><i class="lg-past"></i>прошло / недоступно</span></div>
-   <p class="muted small" style="margin:10px 0 0">Точки у даты: <span style="color:var(--amber)">●</span> есть записи, <span style="color:var(--bad)">●</span> есть закрытые вами часы. Воскресенье — выходной (как на сайте).</p>
+   <div class="legend"><span><i class="lg-free"></i>свободно</span><span><i class="lg-book"></i>записан ученик (сайт или вручную)</span><span><i class="lg-closed"></i>нет занятий (закрыто вами)</span><span><i class="lg-past"></i>прошло / недоступно</span></div>
+   <p class="muted small" style="margin:10px 0 0">Точки у даты: <span style="color:var(--amber)">●</span> есть записи/занято учеником, <span style="color:var(--bad)">●</span> есть закрытые вами часы. Воскресенье — выходной (как на сайте).</p>
   </section>
 
   <section class="card" aria-live="polite">
@@ -43,9 +43,10 @@
     <div class="slots" id="slots"></div>
     <div class="actions">
      <button class="btn btn-bad" id="closeDay" type="button">Закрыть весь день</button>
+     <button class="btn btn-ghost" id="closeRange" type="button">Закрыть часы…</button>
      <button class="btn btn-ok" id="openDay" type="button">Открыть день</button>
     </div>
-    <p class="muted small" style="margin:12px 0 0">Нажмите на свободный час — он закроется для записи. Нажмите на красный — откроется снова. Часы с записью учеников и прошедшие часы изменить нельзя.</p>
+    <p class="muted small" style="margin:12px 0 0">Нажмите на свободный час: можно отметить «Занято учеником» (имя, телефон, заметка — по желанию) или «Нет занятий» (учитель занят / выходной / другое). Нажмите на занятый вами час — изменить или освободить. Записи с сайта и прошедшие часы изменить нельзя.</p>
    </div>
   </section>
  </div>
@@ -53,7 +54,7 @@
  <section class="card sec">
   <h2>Ближайшие записи</h2>
   <ul class="list" id="bookings"><li class="muted">Загрузка…</li></ul>
-  <p class="muted small" style="margin:10px 0 0">Здесь видны только дата, время и тариф. Имя и телефон ученика в общем хранилище <b>не сохраняются</b> — они приходят вам в WhatsApp (кнопка «Отправить данные в WhatsApp» на экране записи) и хранятся только на устройстве ученика.</p>
+  <p class="muted small" style="margin:10px 0 0">Записи с сайта: только дата, время и тариф — имя и телефон ученика в общем хранилище <b>не сохраняются</b>, они приходят вам в WhatsApp (кнопка «Отправить данные в WhatsApp» после записи). Часы, внесённые вами вручную как «Занято учеником», тоже в списке; их имя, телефон и заметка хранятся <b>только в этом браузере</b> (нажмите на строку, чтобы изменить).</p>
  </section>
 
  <details id="pinBox">
@@ -72,11 +73,15 @@
   <summary>Инструкция</summary>
   <h3>Как открыть админку</h3>
   <p>Адрес: <code id="guideUrl">…/admin.html</code> (на сайте ссылки на неё нет — сохраните в закладки). Введите PIN. Начальный PIN: <code>2580</code> — сразу смените его (раздел «Сменить PIN»).</p>
-  <h3>Закрыть / открыть время</h3>
+  <h3>Занять / закрыть время</h3>
   <ul>
-   <li>Выберите дату → нажмите зелёный час: он станет красным («закрыто»), на сайте он показывается как «занято».</li>
-   <li>Нажмите красный час — он снова свободен. Часы, на которые записались ученики (жёлтые), закрыть или открыть нельзя.</li>
-   <li>«Закрыть весь день» закрывает все свободные часы дня; «Открыть день» открывает только закрытые вами часы (записи учеников не трогает).</li>
+   <li>Выберите дату → нажмите зелёный (свободный) час. Откроется окно:
+    <ul><li><b>Занято учеником</b> — по желанию имя, телефон, заметка (тариф, что изучает). На сайте час показывается как «занято».</li>
+    <li><b>Нет занятий</b> — причина: учитель занят / выходной / другое (+ пояснение). На сайте тоже «занято».</li></ul></li>
+   <li>Нажмите на занятый вами час (красный или с именем) — можно изменить данные или «Освободить время».</li>
+   <li>Жёлтые часы — записи с сайта: изменить их здесь нельзя (при нажатии покажется тариф).</li>
+   <li>«Закрыть весь день» и «Закрыть часы…» (например, с 14:00 до 18:00) — выбрать причину; закроются только свободные часы. «Открыть день» открывает все часы «нет занятий»; ученики (с сайта и внесённые вручную) остаются.</li>
+   <li><b>Где хранятся данные:</b> имя, телефон, заметки и пояснения — <b>только в браузере, где вы их ввели</b> (на другом телефоне/компьютере или после очистки данных браузера их не будет видно, останется «занято»). В общее хранилище (и на сайт) уходит лишь отметка вроде <code>12-adm-student</code> или <code>12-adm-busy</code> — без имён и телефонов. Для важных данных ведите свою запись/WhatsApp.</li>
    <li>Записи на сайте принимаются на 30 дней вперёд, часы 10:00–19:00, воскресенье — выходной. За час до начала запись на сайте закрывается.</li>
   </ul>
   <h3>Как сменить цены и телефон</h3>
@@ -96,6 +101,7 @@
   </ol>
  </details>
 </div>
+<div class="backdrop" id="dlgBack" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<script src="js/admin.js?v=1"></script>
+<script src="js/admin.js?v=2"></script>
 </body></html>

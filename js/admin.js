@@ -29,7 +29,10 @@ var PIN_HASH='43ca8963425078a134cf7b463c2a03e81fd67335f7b8db506d5564dbeca1a363';
 /* ---------- Config: MUST match js/app.js ---------- */
 var CFG={api:'https://keyvalue.immanuel.co/api/KeyVal',appKey:'10y0bwsv',prefix:'d',
  hours:[10,11,12,13,14,15,16,17,18,19],days:30,minNoticeMin:60,tzOffsetH:5};
-var BLOCK={tok:'adm',plan:'blocked'};     /* owner-block entry: serialised as "<hour>-adm-blocked" */
+/* Owner entries in the shared store use tok 'adm' and plan: 'student' (manually occupied by a student) or a "no lessons" code:
+   'busy' (teacher busy), 'off' (day off), 'blocked' (other; also what older admin versions wrote). Serialised e.g. "12-adm-busy".
+   The public calendar treats ANY entry for an hour as busy. Names/phones/notes are NOT stored here (see Labels, localStorage only). */
+var OWN='adm',REASONS={busy:'Учитель занят',off:'Выходной',blocked:'Другое'};
 var PLANS={1:'1 месяц',2:'2 месяца',5:'5 месяцев'};
 var MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 var MON3=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
@@ -54,7 +57,15 @@ var Remote={
  read:function(key){return timed(CFG.api+'/GetValue/'+CFG.appKey+'/'+CFG.prefix+key).then(function(r){return r.json()}).then(function(v){return parse(v)})},
  write:function(key,map){return timed(CFG.api+'/UpdateValue/'+CFG.appKey+'/'+CFG.prefix+key+'/'+encodeURIComponent(ser(map)),{method:'POST'}).then(function(r){return r.text()})}};
 function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
-function isBlock(e){return !!e&&e.tok===BLOCK.tok&&e.plan===BLOCK.plan}
+function isOwn(e){return !!e&&e.tok===OWN}
+function isStudent(e){return isOwn(e)&&e.plan==='student'}
+function isBlock(e){return isOwn(e)&&!!REASONS[e.plan]}      /* owner "no lessons" entry */
+/* Labels (name/phone/note/reason text) live ONLY in this browser's localStorage, keyed by day+hour; never sent to the store. */
+var Lab={all:function(){try{return JSON.parse(localStorage.getItem('ik-adm-labels')||'{}')}catch(e){return {}}},
+ get:function(k,h,e){var l=(this.all()[k]||{})[h];return l&&e&&l.plan===e.plan?l:null},
+ set:function(k,h,o){var a=this.all();(a[k]=a[k]||{})[h]=o;this.save(a)},
+ del:function(k,h){var a=this.all();if(a[k]){delete a[k][h];if(!Object.keys(a[k]).length)delete a[k]}this.save(a)},
+ save:function(a){try{localStorage.setItem('ik-adm-labels',JSON.stringify(a))}catch(e){}}};
 
 /* Race-safe mutation, same approach as app.js book(): read fresh -> apply change to the fresh map -> write whole day ->
    re-read after a short random delay (twice) and make sure the change is still there; if another writer overwrote it,
@@ -76,8 +87,8 @@ var today=dayStart(almatyNow()),last=addDays(today,CFG.days);
 var state={days:{},sel:null,remoteOk:true,busy:0};
 function bookable(d){return d.getUTCDay()!==0&&d>=today&&d<=last}
 function slotInfo(d,h){var m=state.days[dkey(d)];if(!m)return 'unknown';var e=m[h];
- if(e)return isBlock(e)?'closed':'booked';return isPast(d,h)?'past':'free'}
-function counts(d){var m=state.days[dkey(d)];if(!m)return null;var c={free:0,booked:0,closed:0};CFG.hours.forEach(function(h){var s=slotInfo(d,h);if(c[s]!=null)c[s]++});return c}
+ if(e)return isBlock(e)?'closed':isStudent(e)?'student':'booked';return isPast(d,h)?'past':'free'}
+function counts(d){var m=state.days[dkey(d)];if(!m)return null;var c={free:0,booked:0,closed:0};CFG.hours.forEach(function(h){var s=slotInfo(d,h);if(s==='student')s='booked';if(c[s]!=null)c[s]++});return c}
 
 /* ---------- Gate ---------- */
 var Pin={
@@ -136,39 +147,97 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden&&sta
 
 /* ---------- Day view ---------- */
 function selectDay(d){state.sel=d;[].forEach.call(cal.querySelectorAll('.day'),function(b){b.classList.toggle('sel',b.dataset.k===dkey(d))});renderDay();loadDay(d)}
+function shortLab(t,n){t=String(t||'');return t.length>n?t.slice(0,n-1)+'…':t}
+function slotLabel(d,h,e,st){var l=Lab.get(dkey(d),h,e);
+ if(st==='student')return {short:l&&l.name?l.name:'ученик',full:'Занято учеником'+(l&&l.name?': '+l.name:'')+(l&&l.note?' ('+l.note+')':'')};
+ if(st==='closed'){var r=REASONS[e.plan],t=l&&l.text;return {short:t||r,full:'Нет занятий: '+r+(t?' — '+t:'')}}
+ return null}
 function renderDay(){var d=state.sel;if(!d)return;$('noSel').hidden=true;$('dayBox').hidden=false;$('dayTitle').textContent=human(d);
  var s=$('slots');s.innerHTML='';var c=counts(d),m=state.days[dkey(d)];
- CFG.hours.forEach(function(h){var st=slotInfo(d,h),lab={free:'свободно',booked:'запись',closed:'закрыто',past:'прошло',unknown:'…'}[st],
-  b=el('button','slot '+st+(state.busy?' busy':''),pad(h)+':00<em>'+lab+'</em>');b.type='button';b.dataset.h=h;b.dataset.state=st;
-  var e=m&&m[h];b.setAttribute('aria-label',pad(h)+':00–'+pad(h+1)+':00, '+lab+(e&&!isBlock(e)&&e.plan&&PLANS[e.plan]?' ('+PLANS[e.plan]+')':''));
-  if(st==='free'||st==='closed')b.onclick=function(){toggle(d,h,st)};else b.disabled=(st!=='booked')||false;
-  if(st==='booked'){b.setAttribute('aria-disabled','true');b.title='Здесь запись ученика — изменить нельзя'}
+ CFG.hours.forEach(function(h){var st=slotInfo(d,h),e=m&&m[h],sl=e?slotLabel(d,h,e,st):null,
+  lab=sl?sl.short:{free:'свободно',booked:'запись',past:'прошло',unknown:'…'}[st],
+  b=el('button','slot '+st+(state.busy?' busy':''),pad(h)+':00<em></em>');b.querySelector('em').textContent=shortLab(lab,9);b.type='button';b.dataset.h=h;b.dataset.state=st;
+  b.setAttribute('aria-label',pad(h)+':00–'+pad(h+1)+':00, '+(sl?sl.full:lab)+(st==='booked'&&e.plan&&PLANS[e.plan]?' (запись с сайта, '+PLANS[e.plan]+')':''));
+  if(sl)b.title=sl.full;
+  if(st==='free'||st==='closed'||st==='student')b.onclick=function(){slotDialog(d,h)};
+  else if(st==='booked'){b.setAttribute('aria-disabled','true');b.title='Запись с сайта — изменить нельзя';b.onclick=function(){toast('Это запись с сайта'+(e.plan&&PLANS[e.plan]?' (тариф: '+PLANS[e.plan]+')':'')+'. Имя и телефон пришли вам в WhatsApp. Изменить её здесь нельзя.')}}
+  else b.disabled=true;
   s.appendChild(b)});
- $('closeDay').disabled=!c||!c.free||!!state.busy;$('openDay').disabled=!c||!c.closed||!!state.busy}
-var tt;function toast(t){var e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(tt);tt=setTimeout(function(){e.hidden=true},3500)}
+ $('closeDay').disabled=!c||!c.free||!!state.busy;$('closeRange').disabled=$('closeDay').disabled;$('openDay').disabled=!c||!c.closed||!!state.busy}
+var tt;function toast(t){var e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(tt);tt=setTimeout(function(){e.hidden=true},4500)}
 function setBusy(n){state.busy+=n;if(state.sel)renderDay()}
 function after(d,res,okMsg){state.days[dkey(d)]=res.map;paintDay(d);renderBookings();if(state.sel)renderDay();if(res.ok)toast(okMsg);
- else toast(res.reason==='booked'?'😔 На это время только что записался ученик — закрыть нельзя.':'Не удалось изменить: '+res.reason)}
+ else toast(res.reason==='booked'?'😔 На это время только что записался ученик (или оно занято) — изменить нельзя.':'Не удалось изменить: '+res.reason)}
 function fail(d){toast('⚠️ Нет связи с сервером или запись не сохранилась. Попробуйте ещё раз.');return loadDay(d)}
 
-/* close / reopen one slot */
-function toggle(d,h,st){var k=dkey(d);setBusy(1);
- var job=st==='free'?
-  mutate(k,function(m){if(m[h])return isBlock(m[h])?{skip:true}:{abort:'booked'};m[h]={tok:BLOCK.tok,plan:BLOCK.plan};return {map:m}},function(v){return !!v[h]}):
-  mutate(k,function(m){if(!m[h])return {skip:true};if(!isBlock(m[h]))return {abort:'booked'};delete m[h];return {map:m}},function(v){return !isBlock(v[h])});
- job.then(function(res){setBusy(-1);after(d,res,st==='free'?'🔒 '+pad(h)+':00 закрыто':'✅ '+pad(h)+':00 снова открыто')},function(){setBusy(-1);return fail(d)})}
-$('closeDay').onclick=function(){var d=state.sel;if(!d)return;var k=dkey(d),targets=[];setBusy(1);
- mutate(k,function(m){var any=false;targets=[];CFG.hours.forEach(function(h){if(!m[h]&&!isPast(d,h)){m[h]={tok:BLOCK.tok,plan:BLOCK.plan};targets.push(h);any=true}});return any?{map:m}:{skip:true}},function(v){return targets.every(function(h){return !!v[h]})})
- .then(function(res){setBusy(-1);after(d,res,'🔒 День закрыт (свободные часы)')},function(){setBusy(-1);return fail(d)})};
+/* ---------- Dialogs ---------- */
+var dlgBack=$('dlgBack'),dlgBox=$('dlg'),dlgPrev=null;
+function openDlg(html){dlgPrev=document.activeElement;dlgBox.innerHTML=html;dlgBack.hidden=false;document.body.style.overflow='hidden';var f=dlgBox.querySelector('input:not([type=radio]),input:checked,select,button');f&&f.focus();return dlgBox}
+function closeDlg(){dlgBack.hidden=true;dlgBox.innerHTML='';document.body.style.overflow='';dlgPrev&&dlgPrev.focus&&dlgPrev.focus()}
+dlgBack.addEventListener('mousedown',function(e){if(e.target===dlgBack)closeDlg()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dlgBack.hidden)closeDlg()});
+function attr(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function reasonRadios(cur){return '<div class="reasons" role="radiogroup" aria-label="Причина">'+Object.keys(REASONS).map(function(r){return '<label class="opt"><input type="radio" name="reason" value="'+r+'"'+(cur===r?' checked':'')+'><span>'+REASONS[r]+'</span></label>'}).join('')+'</div>'+
+ '<label class="fl">Пояснение (необязательно, видно только вам на этом устройстве)<input type="text" id="dText" maxlength="60" autocomplete="off"></label>'}
+function hourOpts(from,to,sel){var o='';for(var h=from;h<=to;h++)o+='<option value="'+h+'"'+(h===sel?' selected':'')+'>'+pad(h)+':00</option>';return o}
+function dlgNote(){return '<p class="muted small" style="margin:10px 0 0">Имя, телефон и заметки сохраняются <b>только в этом браузере</b> (на других устройствах будет видно лишь «занято»). На сайт уходит только отметка «занято».</p>'}
+
+/* one slot: occupy (student) / no lessons (reason) / edit / free */
+function slotDialog(d,h){var k=dkey(d),m=state.days[k]||{},e=m[h],ex=isOwn(e)?e:null,st=ex?(isStudent(ex)?'student':'off'):'student',l=ex?Lab.get(k,h,ex):null,
+ reason=ex&&isBlock(ex)?ex.plan:'busy';
+ var box=openDlg('<h3 id="dlgTitle">'+pad(h)+':00–'+pad(h+1)+':00 · '+human(d)+'</h3>'+
+  '<div class="seg" role="radiogroup" aria-label="Тип"><label class="opt"><input type="radio" name="kind" value="student"'+(st==='student'?' checked':'')+'><span>Занято учеником</span></label><label class="opt"><input type="radio" name="kind" value="off"'+(st==='off'?' checked':'')+'><span>Нет занятий</span></label></div>'+
+  '<div id="fStudent"><label class="fl">Имя ученика (необязательно)<input type="text" id="dName" maxlength="40" autocomplete="off"></label>'+
+  '<label class="fl">Телефон (необязательно)<input type="text" id="dPhone" inputmode="tel" maxlength="24" autocomplete="off"></label>'+
+  '<label class="fl">Заметка (тариф, что изучает…)<input type="text" id="dNote" maxlength="80" autocomplete="off"></label></div>'+
+  '<div id="fReason">'+reasonRadios(reason)+'</div>'+dlgNote()+
+  '<div class="actions dlgact"><button class="btn" id="dSave" type="button">Сохранить</button>'+(ex?'<button class="btn btn-bad" id="dFree" type="button">Освободить время</button>':'')+'<button class="btn btn-ghost" id="dCancel" type="button">Отмена</button></div>');
+ box.querySelector('#dName').value=l&&l.name||'';box.querySelector('#dPhone').value=l&&l.phone||'';box.querySelector('#dNote').value=l&&l.note||'';box.querySelector('#dText').value=l&&l.text||'';
+ function kind(){return box.querySelector('input[name=kind]:checked').value}
+ function sync(){var s=kind()==='student';box.querySelector('#fStudent').hidden=!s;box.querySelector('#fReason').hidden=s}
+ [].forEach.call(box.querySelectorAll('input[name=kind]'),function(r){r.onchange=sync});sync();
+ box.querySelector('#dCancel').onclick=closeDlg;
+ box.querySelector('#dSave').onclick=function(){var plan,lab,isSt=kind()==='student';
+  if(isSt){plan='student';lab={plan:plan,name:box.querySelector('#dName').value.trim(),phone:box.querySelector('#dPhone').value.trim(),note:box.querySelector('#dNote').value.trim()}}
+  else{plan=box.querySelector('input[name=reason]:checked').value;lab={plan:plan,text:box.querySelector('#dText').value.trim()}}
+  closeDlg();setBusy(1);
+  mutate(k,function(mm){if(mm[h]&&!isOwn(mm[h]))return {abort:'booked'};if(mm[h]&&mm[h].plan===plan)return {skip:true};mm[h]={tok:OWN,plan:plan};return {map:mm}},function(v){return !!v[h]&&v[h].tok===OWN&&v[h].plan===plan})
+  .then(function(res){setBusy(-1);if(res.ok)Lab.set(k,h,lab);after(d,res,isSt?'✅ '+pad(h)+':00 — занято учеником':'🔒 '+pad(h)+':00 — нет занятий')},function(){setBusy(-1);return fail(d)})};
+ if(ex)box.querySelector('#dFree').onclick=function(){closeDlg();freeSlot(d,h)}}
+function freeSlot(d,h){var k=dkey(d);setBusy(1);
+ mutate(k,function(mm){if(!mm[h])return {skip:true};if(!isOwn(mm[h]))return {abort:'booked'};delete mm[h];return {map:mm}},function(v){return !isOwn(v[h])})
+ .then(function(res){setBusy(-1);if(res.ok)Lab.del(k,h);after(d,res,'✅ '+pad(h)+':00 снова свободно')},function(){setBusy(-1);return fail(d)})}
+
+/* several hours / whole day: "no lessons" with a reason */
+function rangeDialog(whole){var d=state.sel;if(!d)return;var k=dkey(d),first=CFG.hours[0],lastH=CFG.hours[CFG.hours.length-1]+1;
+ if(!whole){var m=state.days[k]||{};for(var i=0;i<CFG.hours.length;i++){var hh=CFG.hours[i];if(!m[hh]&&!isPast(d,hh)){first=hh;break}}}
+ var box=openDlg('<h3 id="dlgTitle">'+(whole?'Закрыть весь день':'Закрыть часы')+' · '+human(d)+'</h3>'+
+  '<div class="range"><label class="fl">С<select id="rFrom">'+hourOpts(first,lastH-1,first)+'</select></label><label class="fl">До<select id="rTo">'+hourOpts(first+1,lastH,lastH)+'</select></label></div>'+
+  '<p class="muted small" style="margin:0 0 8px">Закроются только свободные часы: записи (с сайта или внесённые вручную) и прошедшие часы не меняются.</p>'+
+  reasonRadios('busy')+dlgNote()+
+  '<div class="actions dlgact"><button class="btn btn-bad" id="rGo" type="button">Закрыть</button><button class="btn btn-ghost" id="dCancel" type="button">Отмена</button></div>');
+ var from=box.querySelector('#rFrom'),to=box.querySelector('#rTo');
+ from.onchange=function(){var f=+from.value,t=+to.value;to.innerHTML=hourOpts(f+1,lastH,Math.max(t,f+1))};
+ box.querySelector('#dCancel').onclick=closeDlg;
+ box.querySelector('#rGo').onclick=function(){var f=+from.value,t=+to.value,plan=box.querySelector('input[name=reason]:checked').value,text=box.querySelector('#dText').value.trim(),targets=[];closeDlg();setBusy(1);
+  mutate(k,function(mm){var any=false;targets=[];CFG.hours.forEach(function(h){if(h>=f&&h<t&&!mm[h]&&!isPast(d,h)){mm[h]={tok:OWN,plan:plan};targets.push(h);any=true}});return any?{map:mm}:{skip:true}},function(v){return targets.every(function(h){return !!v[h]})})
+  .then(function(res){setBusy(-1);if(res.ok)targets.forEach(function(h){if(res.map[h]&&res.map[h].tok===OWN&&res.map[h].plan===plan)Lab.set(k,h,{plan:plan,text:text})});after(d,res,targets.length?'🔒 Закрыто часов: '+targets.length:'Нет свободных часов в этом промежутке')},function(){setBusy(-1);return fail(d)})}}
+$('closeDay').onclick=function(){rangeDialog(true)};
+$('closeRange').onclick=function(){rangeDialog(false)};
 $('openDay').onclick=function(){var d=state.sel;if(!d)return;var k=dkey(d),targets=[];setBusy(1);
  mutate(k,function(m){var any=false;targets=[];Object.keys(m).forEach(function(h){if(isBlock(m[h])){delete m[h];targets.push(+h);any=true}});return any?{map:m}:{skip:true}},function(v){return targets.every(function(h){return !isBlock(v[h])})})
- .then(function(res){setBusy(-1);after(d,res,'✅ День открыт (закрытые вами часы)')},function(){setBusy(-1);return fail(d)})};
+ .then(function(res){setBusy(-1);if(res.ok)targets.forEach(function(h){Lab.del(k,h)});after(d,res,'✅ День открыт (часы «нет занятий»; ученики остаются)')},function(){setBusy(-1);return fail(d)})};
 
-/* ---------- Upcoming bookings ---------- */
+/* ---------- Upcoming bookings (site bookings + hours you marked as "occupied by a student") ---------- */
 function renderBookings(){var ul=$('bookings'),rows=[],d;ul.innerHTML='';
- for(d=today;d<=last;d=addDays(d,1)){var m=state.days[dkey(d)];if(!m)continue;CFG.hours.forEach(function(h){var e=m[h];if(e&&!isBlock(e)&&!ended(d,h))rows.push({d:d,h:h,plan:e.plan})})}
+ for(d=today;d<=last;d=addDays(d,1)){var k=dkey(d),m=state.days[k];if(!m)continue;CFG.hours.forEach(function(h){var e=m[h];if(e&&!isBlock(e)&&!ended(d,h))rows.push({d:d,h:h,k:k,e:e})})}
  if(!rows.length){ul.appendChild(el('li','muted',state.remoteOk?'Ближайших записей нет.':'Нет данных (проверьте связь и нажмите «Обновить»).'));return}
- rows.forEach(function(r){var li=el('li','','<b>'+human(r.d)+'</b><span class="t">'+pad(r.h)+':00–'+pad(r.h+1)+':00</span><span class="pl">'+(PLANS[r.plan]?'тариф: '+PLANS[r.plan]:'тариф не указан')+'</span>');ul.appendChild(li)})}
+ rows.forEach(function(r){var own=isStudent(r.e),l=own?Lab.get(r.k,r.h,r.e):null,right,who='';
+  if(own){right='внесено вручную';who=l&&(l.name||l.phone||l.note)?[l.name,l.phone,l.note].filter(Boolean).map(attr).join(' · '):'без данных (или данные на другом устройстве)'}
+  else right=PLANS[r.e.plan]?'тариф: '+PLANS[r.e.plan]:'тариф не указан';
+  var li=el('li','','<b>'+human(r.d)+'</b><span class="t">'+pad(r.h)+':00–'+pad(r.h+1)+':00</span><span class="pl">'+right+'</span>'+(who?'<span class="who">'+who+'</span>':''));
+  if(own){li.className='own';li.tabIndex=0;li.setAttribute('role','button');li.title='Изменить';li.onclick=function(){selectDay(r.d);slotDialog(r.d,r.h)};li.onkeydown=function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();li.onclick()}}}
+  ul.appendChild(li)})}
 
 /* ---------- Change PIN ---------- */
 $('chgForm').addEventListener('submit',function(ev){ev.preventDefault();var o=$('pinOld').value,n=$('pinNew').value,n2=$('pinNew2').value;
