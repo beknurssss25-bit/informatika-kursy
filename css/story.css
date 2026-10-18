@@ -1,0 +1,50 @@
+/* Scroll-driven 3D hero. Without WebGL (html.no-gl) the original static hero layout is used. */
+#gl,.story-ui,.skip-intro{display:none}
+html.gl{background:var(--bg)}
+html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
+.hero-bg{z-index:0}
+.stage{position:relative}
+
+/* ---- WebGL mode ---- */
+html.gl .story{height:400vh;height:400svh;padding:0;overflow:visible;background:var(--bg)}
+html.gl .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;contain:paint}
+html.gl #gl{display:block;position:absolute;inset:0;width:100%;height:100%;z-index:1}
+html.gl .hero-art{display:none}
+html.gl .hero-in{position:absolute;inset:0;margin:auto;height:100%;display:flex;align-items:center;z-index:2;pointer-events:none}
+html.gl .hero-text{max-width:min(560px,52%);pointer-events:auto;padding-top:30px;will-change:opacity,transform}
+html.gl .hero-bg .orb{opacity:.4}
+html.gl .story-ui{display:block;position:absolute;inset:0;z-index:3;pointer-events:none}
+.scroll-hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:#9AA5DC;font:600 12px var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.scroll-hint i{width:2px;height:34px;border-radius:2px;background:linear-gradient(#7C5CFF,#22D3EE);transform-origin:top;animation:hint 1.8s ease-in-out infinite}
+@keyframes hint{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+.steps{list-style:none;margin:0;padding:0;position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:16px;opacity:0;transition:opacity .4s}
+.steps.show{opacity:1}
+.steps li{position:relative;color:transparent;font:700 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding-right:24px;text-align:right;transition:color .3s}
+.steps li:after{content:"";position:absolute;right:0;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#2A3358;transition:.3s}
+.steps li.on{color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.8)}.steps li.on:after{background:linear-gradient(135deg,#7C5CFF,#22D3EE);box-shadow:0 0 14px #7C5CFF;transform:scale(1.3)}
+html.gl .skip-intro{display:inline-flex;pointer-events:auto;position:absolute;right:26px;top:84px;padding:9px 16px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#DDE3FF;text-decoration:none;font:600 14px var(--font);backdrop-filter:blur(8px);transition:background .2s}
+html.gl .skip-intro:hover{background:rgba(255,255,255,.16)}
+/* no scroll-hint overlap with skip link on small screens */
+
+@media(max-width:980px){
+  html.gl .hero-text{max-width:min(520px,100%)}
+}
+@media(max-width:620px){
+  html.gl .story{height:380vh;height:380svh}
+  html.gl .hero-in{align-items:flex-start;padding-top:84px}
+  html.gl .hero-text{max-width:100%;padding-top:0;text-align:left}
+  html.gl .hero-text .lead,html.gl .hero-text .hero-facts{display:none}
+  html.gl .hero-text h1{font-size:31px;margin-bottom:6px}
+  html.gl .hero-text .tag{margin-bottom:14px;font-size:13px}
+  html.gl .hero-text .cta-row{margin:18px 0 0;gap:10px}
+  html.gl .hero-text .cta-row .btn-lg{width:auto;flex:1 1 150px;padding:13px 14px;font-size:15px}
+  .steps{right:auto;left:50%;top:auto;bottom:22px;transform:translateX(-50%);flex-direction:row;gap:22px}
+  .steps li{padding:0 0 16px;text-align:center;font-size:11px}
+  .steps li:after{right:auto;left:50%;top:auto;bottom:0;margin:0 0 0 -5px}
+  html.gl .skip-intro{right:12px;top:76px;padding:7px 12px;font-size:13px}
+  .scroll-hint{bottom:18px}
+}
+@media(max-height:560px) and (min-width:621px){html.gl .hero-text .lead,html.gl .hero-text .hero-facts{display:none}}
+/* ---- static (no WebGL) mode: a tidy dark hero with the original illustration ---- */
+html.no-gl .hero{background:var(--bg)}
